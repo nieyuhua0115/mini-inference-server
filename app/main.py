@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from app.model_runner import DummyModelRunner
+
 app = FastAPI()
+model_runner = DummyModelRunner()
 
 
 class PredictRequest(BaseModel):
@@ -24,4 +27,5 @@ def readyz() -> dict[str, str]:
 
 @app.post("/predict")
 def predict(request: PredictRequest) -> PredictResponse:
-    return PredictResponse(output=request.input)
+    output = model_runner.predict(request.input)
+    return PredictResponse(output=output)
