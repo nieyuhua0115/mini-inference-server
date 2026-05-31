@@ -1,13 +1,13 @@
 import asyncio
 from dataclasses import dataclass
 
-from app.model_runner import ModelRunner
+from app.model_runner import ModelInput, ModelOutput, ModelRunner
 
 
 @dataclass(frozen=True)
 class PredictionJob:
-    input: str
-    future: asyncio.Future[str]
+    features: ModelInput
+    future: asyncio.Future[ModelOutput]
 
 
 class PredictionQueue:
@@ -32,13 +32,13 @@ class PredictionQueue:
         self._queue = None
         self._worker_task = None
 
-    async def predict(self, input: str) -> str:
+    async def predict(self, features: ModelInput) -> ModelOutput:
         if self._queue is None or self._worker_task is None or self._worker_task.done():
             raise RuntimeError("PredictionQueue is not started")
 
         loop = asyncio.get_running_loop()
-        future: asyncio.Future[str] = loop.create_future()
-        await self._queue.put(PredictionJob(input=input, future=future))
+        future: asyncio.Future[ModelOutput] = loop.create_future()
+        await self._queue.put(PredictionJob(features=features, future=future))
         return await future
 
     async def _worker(self) -> None:
@@ -53,7 +53,7 @@ class PredictionQueue:
                     return
 
                 try:
-                    output = self._model_runner.predict(job.input)
+                    output = self._model_runner.predict(job.features)
                 except Exception as exc:
                     job.future.set_exception(exc)
                 else:
