@@ -1,7 +1,10 @@
-from app.model_runner import DummyModelRunner
+from app.model_runner import IrisModelRunner
 
 
-def test_dummy_model_runner_returns_input() -> None:
-    runner = DummyModelRunner()
+def test_iris_model_runner_predicts_setosa() -> None:
+    runner = IrisModelRunner()
 
-    assert runner.predict("hello") == "hello"
+    prediction = runner.predict([5.1, 3.5, 1.4, 0.2])
+
+    assert prediction.class_id == 0
+    assert prediction.label == "setosa"
