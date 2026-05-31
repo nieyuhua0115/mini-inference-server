@@ -11,6 +11,15 @@ class IrisPrediction:
     label: str
 
 
+@dataclass(frozen=True)
+class ModelMetadata:
+    name: str
+    version: str
+    task: str
+    input_schema: dict[str, str]
+    output_schema: dict[str, str]
+
+
 ModelInput = list[float]
 ModelOutput = IrisPrediction
 
@@ -18,6 +27,10 @@ ModelOutput = IrisPrediction
 class ModelRunner(ABC):
     @abstractmethod
     def predict(self, features: ModelInput) -> ModelOutput:
+        raise NotImplementedError
+
+    @abstractmethod
+    def metadata(self) -> ModelMetadata:
         raise NotImplementedError
 
 
@@ -33,4 +46,18 @@ class IrisModelRunner(ModelRunner):
         return IrisPrediction(
             class_id=class_id,
             label=self._target_names[class_id],
+        )
+
+    def metadata(self) -> ModelMetadata:
+        return ModelMetadata(
+            name="iris-knn",
+            version="0.1.0",
+            task="classification",
+            input_schema={
+                "features": "list[float] length 4",
+            },
+            output_schema={
+                "class_id": "int",
+                "label": "str",
+            },
         )

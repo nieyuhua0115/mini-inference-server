@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from pydantic import BaseModel, Field
 
-from app.model_runner import IrisModelRunner
+from app.model_runner import IrisModelRunner, ModelRunner
 from app.request_queue import PredictionQueue
 
 
@@ -12,6 +12,7 @@ from app.request_queue import PredictionQueue
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     model_runner = IrisModelRunner()
     prediction_queue = PredictionQueue(model_runner)
+    app.state.model_runner = model_runner
     app.state.prediction_queue = prediction_queue
     await prediction_queue.start()
     try:
@@ -32,6 +33,14 @@ class PredictResponse(BaseModel):
     label: str
 
 
+class ModelMetadataResponse(BaseModel):
+    name: str
+    version: str
+    task: str
+    input_schema: dict[str, str]
+    output_schema: dict[str, str]
+
+
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
     return {"status": "ok"}
@@ -40,6 +49,19 @@ def healthz() -> dict[str, str]:
 @app.get("/readyz")
 def readyz() -> dict[str, str]:
     return {"status": "ready"}
+
+
+@app.get("/models/current")
+def current_model(request: Request) -> ModelMetadataResponse:
+    model_runner: ModelRunner = request.app.state.model_runner
+    metadata = model_runner.metadata()
+    return ModelMetadataResponse(
+        name=metadata.name,
+        version=metadata.version,
+        task=metadata.task,
+        input_schema=metadata.input_schema,
+        output_schema=metadata.output_schema,
+    )
 
 
 @app.post("/predict")

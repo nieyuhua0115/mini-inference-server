@@ -51,6 +51,12 @@ Readiness check:
 curl http://127.0.0.1:8000/readyz
 ```
 
+Current model metadata:
+
+```bash
+curl http://127.0.0.1:8000/models/current
+```
+
 Iris prediction:
 
 ```bash

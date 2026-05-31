@@ -2,13 +2,22 @@ import asyncio
 
 import pytest
 
-from app.model_runner import IrisPrediction, ModelRunner
+from app.model_runner import IrisPrediction, ModelMetadata, ModelRunner
 from app.request_queue import PredictionQueue
 
 
 class PrefixModelRunner(ModelRunner):
     def predict(self, features: list[float]) -> IrisPrediction:
         return IrisPrediction(class_id=1, label=f"queued: {features[0]}")
+
+    def metadata(self) -> ModelMetadata:
+        return ModelMetadata(
+            name="prefix-test",
+            version="test",
+            task="classification",
+            input_schema={"features": "list[float]"},
+            output_schema={"class_id": "int", "label": "str"},
+        )
 
 
 def test_prediction_queue_returns_model_runner_output() -> None:
